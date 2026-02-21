@@ -1,0 +1,385 @@
+{
+  "name": "SEIA Agent Mode Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "riri-assistant",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "SEIA Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "seia-agent-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENROUTER_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"meta-llama/llama-3.1-8b-instruct:free\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an intent parser. Given a user request, return ONLY a valid JSON object with these fields: action (one of: send_whatsapp, send_telegram, send_email, set_alarm, set_reminder, add_task, unknown), to (phone number or email), message (the message body), subject (email subject if applicable), time (time string if applicable), date (date string if applicable). Return ONLY the JSON object, no explanation, no markdown.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.message }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "openrouter-intent",
+      "name": "Parse Intent (OpenRouter)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $input.first().json;\nconst content = raw.choices[0].message.content.trim();\nconst clean = content.replace(/```json|```/g, '').trim();\ntry {\n  const intent = JSON.parse(clean);\n  intent.originalMessage = $('SEIA Webhook').first().json.body.message;\n  intent.seiaReply = $('SEIA Webhook').first().json.body.seia_reply;\n  return [{ json: intent }];\n} catch(e) {\n  return [{ json: { action: 'unknown', error: 'Failed to parse intent: ' + e.message, raw: clean } }];\n}"
+      },
+      "id": "extract-intent",
+      "name": "Extract Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send_whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WhatsApp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send_email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Email"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "set_alarm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Alarm"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "set_reminder",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reminder"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "add_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AddTask"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "action-router",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "whatsapp:+14155238886"
+            },
+            {
+              "name": "To",
+              "value": "=whatsapp:{{ $json.to }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp (Twilio)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 100],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "twilio-basic",
+          "name": "Twilio Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject || 'Message from SEIA' }}",
+        "emailType": "text",
+        "message": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1120, 240],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-oauth",
+          "name": "Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ntfy.sh/YOUR_NTFY_TOPIC",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"topic\": \"YOUR_NTFY_TOPIC\",\n  \"title\": \"⏰ Alarm: {{ $json.time || 'Now' }}\",\n  \"message\": \"{{ $json.message }}\",\n  \"tags\": [\"alarm_clock\"],\n  \"priority\": 5\n}",
+        "options": {}
+      },
+      "id": "set-alarm",
+      "name": "Set Alarm (ntfy.sh)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ntfy.sh/YOUR_NTFY_TOPIC",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"topic\": \"YOUR_NTFY_TOPIC\",\n  \"title\": \"🔔 Reminder from SEIA\",\n  \"message\": \"{{ $json.message }}\",\n  \"tags\": [\"bell\"],\n  \"priority\": 3\n}",
+        "options": {}
+      },
+      "id": "set-reminder",
+      "name": "Set Reminder (ntfy.sh)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 520]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ntfy.sh/YOUR_NTFY_TOPIC",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"topic\": \"YOUR_NTFY_TOPIC\",\n  \"title\": \"✅ Task Added by SEIA\",\n  \"message\": \"{{ $json.message }}\",\n  \"tags\": [\"white_check_mark\"]\n}",
+        "options": {}
+      },
+      "id": "add-task",
+      "name": "Add Task Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 660]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"action\": \"{{ $('Extract Intent').first().json.action }}\",\n  \"message\": \"SEIA executed your request\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "webhook-response",
+      "name": "Respond to SEIA",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 380]
+    }
+  ],
+  "connections": {
+    "SEIA Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Intent (OpenRouter)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Intent (OpenRouter)": {
+      "main": [
+        [
+          {
+            "node": "Extract Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Intent": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [{ "node": "Send WhatsApp (Twilio)", "type": "main", "index": 0 }],
+        [{ "node": "Send Email (Gmail)",     "type": "main", "index": 0 }],
+        [{ "node": "Set Alarm (ntfy.sh)",    "type": "main", "index": 0 }],
+        [{ "node": "Set Reminder (ntfy.sh)", "type": "main", "index": 0 }],
+        [{ "node": "Add Task Notification",  "type": "main", "index": 0 }]
+      ]
+    },
+    "Send WhatsApp (Twilio)": {
+      "main": [[{ "node": "Respond to SEIA", "type": "main", "index": 0 }]]
+    },
+    "Send Email (Gmail)": {
+      "main": [[{ "node": "Respond to SEIA", "type": "main", "index": 0 }]]
+    },
+    "Set Alarm (ntfy.sh)": {
+      "main": [[{ "node": "Respond to SEIA", "type": "main", "index": 0 }]]
+    },
+    "Set Reminder (ntfy.sh)": {
+      "main": [[{ "node": "Respond to SEIA", "type": "main", "index": 0 }]]
+    },
+    "Add Task Notification": {
+      "main": [[{ "node": "Respond to SEIA", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["SEIA", "agent-mode", "automation"],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "seia-n8n-workflow"
+  },
+  "id": "seia-main-workflow",
+  "versionId": "1"
+}
+ 

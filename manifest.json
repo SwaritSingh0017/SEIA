@@ -1,0 +1,16 @@
+{
+   "name": "SEIA — Sentient Emotional Interactive Agent",
+   "short_name": "SEIA",
+   "description": "Your AI that knows you — mood, tasks, code, 3am thoughts.",
+   "start_url": "/chat",
+   "display": "standalone",
+   "background_color": "#02050e",
+   "theme_color": "#1d6ef5",
+   "icons": [
+     {
+       "src": "/static/icons/seia-icon-192.png",
+       "sizes": "192x192",
+       "type": "image/png"
+        }
+    ]
+}

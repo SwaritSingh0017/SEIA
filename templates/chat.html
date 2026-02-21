@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1d6ef5">
+<link rel="manifest" href="/manifest.json">
+<title>Chat — SEIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Syne:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/main.css">
+<link rel="stylesheet" href="/static/css/chat.css">
+<style>
+  .mode-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--mode-color, #1d6ef5);
+    box-shadow: 0 0 6px var(--mode-color, #1d6ef5);
+  }
+  .sidebar-mode-btn.active {
+    border-color: var(--mode-color, rgba(29,110,245,.2));
+  }
+</style>
+</head>
+<body>
+
+<!-- ── App Nav ── -->
+<nav class="app-nav">
+  <a href="/" class="nav-brand"><span class="nav-logo">SEIA</span></a>
+  <div class="nav-links">
+    <a href="/chat"      class="nav-link active">💬 Chat</a>
+    <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+    <a href="/journal"   class="nav-link">📓 Journal</a>
+    <a href="/reviews"   class="nav-link">⭐ Reviews</a>
+    <a href="/profile"   class="nav-link">👤 {{user.name}}</a>
+    <a href="/logout"    class="nav-btn-out">Logout</a>
+  </div>
+</nav>
+
+<!-- ── Chat Layout ── -->
+<div class="chat-layout">
+
+  <!-- Sidebar -->
+  <aside class="chat-sidebar">
+    <div class="sidebar-section">PERSONALITIES</div>
+    {% for mode_key, mode_data in modes.items() %}
+    <button class="sidebar-mode-btn {% if user.current_mode == mode_key %}active{% endif %}"
+            data-mode="{{ mode_key }}"
+            onclick="switchMode('{{ mode_key }}')"
+            title="Switch to {{ mode_data.label }}"
+            style="--mode-color: {{ mode_data.color }};">
+      <div class="mode-dot"></div>
+      {{ mode_data.label }}
+    </button>
+    {% endfor %}
+
+    <div class="sidebar-section" style="margin-top:16px;">QUICK ACTIONS</div>
+    <button class="sidebar-action-btn" onclick="useHint('Help me debug my code')">🔧 Debug code</button>
+    <button class="sidebar-action-btn" onclick="useHint('I need to talk about something')">💬 Talk it out</button>
+    <button class="sidebar-action-btn" onclick="useHint('seia work — ')">⚡ Run a task</button>
+    <button class="sidebar-action-btn" onclick="useHint('Write me a todo list for today')">✅ Plan my day</button>
+
+    <div class="sidebar-actions">
+      <a href="/dashboard" class="sidebar-action-btn">📊 Dashboard</a>
+      <a href="/journal"   class="sidebar-action-btn">📓 Journal</a>
+      <button class="sidebar-action-btn danger" onclick="resetChat()">🗑️ Clear chat</button>
+    </div>
+  </aside>
+
+  <!-- Main chat -->
+  <main class="chat-main">
+
+    <!-- Header bar -->
+    <div class="chat-header-bar">
+      <div class="chat-header-left">
+        <div class="chat-avatar">🤖</div>
+        <div>
+          <div class="chat-name">SEIA</div>
+          <div class="chat-status">
+            <div class="status-dot"></div>
+            <span>Active &nbsp;•&nbsp;</span>
+            <span id="current-mode-badge" class="mode-badge mode-{{ user.current_mode }}" data-mode="{{ user.current_mode }}" data-color="{{ mode_info.color }}">
+              {{ mode_info.label }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-header-right">
+        <div id="voice-indicator" class="voice-indicator hidden">
+          <div class="vi-bar"></div><div class="vi-bar"></div>
+          <div class="vi-bar"></div><div class="vi-bar"></div>
+          <div class="vi-bar"></div>
+        </div>
+        <button id="voice-mode-btn" class="voice-mode-btn" onclick="toggleVoiceMode()">🔇 Voice OFF</button>
+      </div>
+    </div>
+
+    <!-- Messages window -->
+    <div class="chat-window" id="chat-window">
+      <!-- Welcome screen shown when no messages -->
+      <div class="chat-welcome" id="chat-welcome">
+        <div class="welcome-orb">🤖</div>
+        <div class="welcome-title">Hey {{ user.name }}, I'm SEIA</div>
+        <p class="welcome-sub">
+          Your AI that adapts to whatever you need.<br>
+          Talk to me like a real person — I'll figure out the rest.
+        </p>
+        <div class="welcome-modes">
+          {% for mk, md in modes.items() %}
+          <span class="mode-badge mode-{{ mk }}"
+                onclick="switchMode('{{ mk }}')"
+                style="cursor:pointer;"
+                data-color="{{ md.color }}"
+                title="Click to switch">{{ md.label }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <button class="mic-btn" id="mic-btn" onclick="toggleListening()" title="Voice input">🎙️</button>
+        <div class="chat-input-wrap">
+          <textarea id="user-input" rows="1" placeholder="Message SEIA… (Enter to send, Shift+Enter for newline)"></textarea>
+        </div>
+        <button class="send-btn" onclick="sendMessage()" title="Send">➤</button>
+      </div>
+      <div class="chat-hints">
+        <span class="hint-pill" onclick="useHint('seia dev — ')">💻 Switch to Coder</span>
+        <span class="hint-pill" onclick="useHint('seia listen — ')">🧡 Switch to Therapist</span>
+        <span class="hint-pill" onclick="useHint('seia work — send a WhatsApp to ')">⚡ Send WhatsApp</span>
+        <span class="hint-pill" onclick="useHint('How are you feeling today?')">💬 Chat</span>
+        <span class="hint-pill" onclick="useHint('Can you review this code?')">🔍 Code review</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/static/js/voice.js"></script>
+<script src="/static/js/chat.js"></script>
+<script>
+document.getElementById('current-mode-badge').style.color = document.getElementById('current-mode-badge').getAttribute('data-color');
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

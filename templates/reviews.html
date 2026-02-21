@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Reviews — SEIA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Syne:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .reviews-page {
+            padding-top: 84px;
+            padding-bottom: 40px;
+            min-height: 100vh;
+        }
+
+        .rev-hero {
+            text-align: center;
+            padding: 48px 0 40px;
+        }
+
+        .rev-hero h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .rev-hero p {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .rev-avg {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: rgba(29, 110, 245, .08);
+            border: 1px solid rgba(29, 110, 245, .2);
+            border-radius: 50px;
+        }
+
+        .avg-stars {
+            color: #fbbf24;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .avg-num {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .avg-count {
+            font-size: .78rem;
+            color: var(--muted);
+        }
+
+        .write-review-card {
+            background: var(--card);
+            border: 1px solid rgba(29, 110, 245, .15);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .wrc-title {
+            font-family: 'Orbitron', monospace;
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--blue-light);
+            margin-bottom: 16px;
+        }
+
+        .star-picker {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            opacity: .4;
+            transition: opacity .15s, transform .15s;
+        }
+
+        .star-btn.active,
+        .star-btn:hover {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .rcard {
+            background: var(--card);
+            border: 1px solid var(--edge);
+            border-radius: 10px;
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: all .3s;
+        }
+
+        .rcard::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .4s;
+        }
+
+        .rcard:hover {
+            transform: translateY(-5px);
+        }
+
+        .rcard:hover::before {
+            transform: scaleX(1);
+        }
+
+        .rcard.friend::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .rcard.partner::before {
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+        }
+
+        .rcard.coder::before {
+            background: linear-gradient(90deg, #06b6d4, #22d3ee);
+        }
+
+        .rcard.therapist::before {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+        }
+
+        .rcard.agent::before {
+            background: linear-gradient(90deg, #1d6ef5, #60a5fa);
+        }
+
+        .rcard-mode {
+            font-family: 'Orbitron', monospace;
+            font-size: .6rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            padding: 3px 9px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .mode-friend {
+            background: rgba(16, 185, 129, .08);
+            color: #34d399;
+        }
+
+        .mode-partner {
+            background: rgba(139, 92, 246, .08);
+            color: #a78bfa;
+        }
+
+        .mode-coder {
+            background: rgba(6, 182, 212, .08);
+            color: #22d3ee;
+        }
+
+        .mode-therapist {
+            background: rgba(249, 115, 22, .08);
+            color: #fb923c;
+        }
+
+        .mode-agent {
+            background: rgba(29, 110, 245, .08);
+            color: #60a5fa;
+        }
+
+        .rcard-stars {
+            color: #fbbf24;
+            font-size: .85rem;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .rcard-text {
+            font-size: .82rem;
+            color: var(--muted);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .rcard-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid var(--edge);
+            padding-top: 14px;
+        }
+
+        .rcard-av {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--edge);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+        }
+
+        .rcard-name {
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .rcard-date {
+            font-size: .7rem;
+            color: var(--dim);
+        }
+
+        .no-reviews {
+            text-align: center;
+            padding: 60px;
+            color: var(--dim);
+        }
+
+        @media(max-width:900px) {
+            .reviews-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media(max-width:600px) {
+            .reviews-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="app-nav">
+        <a href="/" class="nav-brand"><span class="nav-logo">SEIA</span></a>
+        <div class="nav-links">
+            <a href="/chat" class="nav-link">💬 Chat</a>
+            <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+            <a href="/journal" class="nav-link">📓 Journal</a>
+            <a href="/reviews" class="nav-link active">⭐ Reviews</a>
+            <a href="/logout" class="nav-btn-out">Logout</a>
+        </div>
+    </nav>
+
+    <div class="page reviews-page">
+        <div class="container">
+
+            <div class="rev-hero">
+                <h1>⭐ Community Reviews</h1>
+                <p>Real users. Real experiences. What SEIA means to people.</p>
+                {% if total > 0 %}
+                <div class="rev-avg">
+                    <span class="avg-stars">★★★★★</span>
+                    <span class="avg-num">{{avg}}</span>
+                    <span class="avg-count">from {{total}} reviews</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Write review -->
+            <div class="write-review-card">
+                <div class="wrc-title">LEAVE A REVIEW</div>
+                <div class="star-picker" id="star-picker">
+                    {% for i in range(1,6) %}
+                    <button class="star-btn {% if i <= 5 %}active{% endif %}" data-val="{{i}}"
+                        onclick="setRating(this.dataset.val)">★</button>
+                    {% endfor %}
+                </div>
+                <textarea class="form-input" id="review-text" rows="3"
+                    placeholder="Tell others about your experience with SEIA…" style="margin-bottom:14px;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="submitReview()">Submit Review</button>
+                <div id="rev-success"
+                    style="display:none;margin-top:10px;padding:8px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:7px;color:#34d399;font-size:.8rem;">
+                    ✓ Review submitted! Refresh to see it.
+                </div>
+            </div>
+
+            <!-- Reviews grid -->
+            {% if reviews %}
+            <div class="reviews-grid">
+                {% for r in reviews %}
+                <div class="rcard {{r.mode}}">
+                    <span class="rcard-mode mode-{{r.mode}}">{{r.mode|upper}} MODE</span>
+                    <div class="rcard-stars">{{r.stars}}</div>
+                    <p class="rcard-text">{{r.text}}</p>
+                    <div class="rcard-author">
+                        <div class="rcard-av">👤</div>
+                        <div>
+                            <div class="rcard-name">{{r.name}}</div>
+                            <div class="rcard-date">{{r.date}}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-reviews">
+                <div style="font-size:3rem;margin-bottom:12px;">⭐</div>
+                <p>No reviews yet. Be the first to share your experience!</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <script>
+        let selectedRating = 5;
+        function setRating(val) {
+            selectedRating = val;
+            document.querySelectorAll('.star-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i < val);
+            });
+        }
+
+        async function submitReview() {
+            const text = document.getElementById('review-text').value.trim();
+            if (!text) return alert('Please write something!');
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: selectedRating, text }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('review-text').value = '';
+                const ok = document.getElementById('rev-success');
+                ok.style.display = 'block';
+            } else {
+                alert(data.error || 'Error submitting review');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login — SEIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Syne:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/main.css">
+<style>
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--void);}
+.auth-page::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 60% at 60% 40%,rgba(29,110,245,.07),transparent 60%);pointer-events:none;}
+.auth-box{width:100%;max-width:420px;position:relative;z-index:1;}
+.auth-logo{text-align:center;margin-bottom:36px;}
+.auth-logo-text{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:var(--blue-light);letter-spacing:4px;}
+.auth-logo-sub{font-size:.75rem;color:var(--muted);letter-spacing:2px;margin-top:4px;}
+.auth-card{background:var(--card);border:1px solid rgba(29,110,245,.15);border-radius:14px;padding:36px;box-shadow:0 0 60px rgba(29,110,245,.08);}
+.auth-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--white);margin-bottom:6px;letter-spacing:1px;}
+.auth-sub{font-size:.82rem;color:var(--muted);margin-bottom:28px;}
+.auth-footer{text-align:center;margin-top:20px;font-size:.82rem;color:var(--muted);}
+.auth-footer a{color:var(--blue-light);}
+.auth-footer a:hover{color:var(--white);}
+.form-input{background:var(--panel);border:1px solid var(--edge);color:var(--white);padding:13px 16px;border-radius:8px;width:100%;font-family:'Syne',sans-serif;font-size:.9rem;outline:none;transition:border-color .25s,box-shadow .25s;}
+.form-input:focus{border-color:var(--blue-glow);box-shadow:0 0 0 3px rgba(29,110,245,.12);}
+.form-input::placeholder{color:var(--dim);}
+.remember-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;}
+.remember-row input{accent-color:var(--blue);}
+.remember-row label{font-size:.82rem;color:var(--muted);}
+.btn-full{width:100%;justify-content:center;padding:13px;font-size:.92rem;}
+</style>
+</head>
+<body>
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat,msg in messages %}
+      <div class="flash {{cat}}">{{msg}}</div>
+    {% endfor %}
+  {% endwith %}
+</div>
+ 
+<div class="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-text">SEIA</div>
+      <div class="auth-logo-sub">SENTIENT EMOTIONAL INTERACTIVE AGENT</div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Log in to continue your conversation</div>
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" name="password" placeholder="Your password" required autocomplete="current-password">
+        </div>
+        <div class="remember-row">
+          <input type="checkbox" name="remember" id="remember">
+          <label for="remember">Keep me logged in</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Log In →</button>
+      </form>
+      <div class="auth-footer">
+        No account? <a href="/signup">Create one — it's free</a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+ 

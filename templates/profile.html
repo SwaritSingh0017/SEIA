@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile — SEIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Syne:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/main.css">
+<style>
+.profile-page{padding-top:84px;padding-bottom:40px;min-height:100vh;}
+.profile-layout{display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:start;}
+.profile-sidebar{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:28px;text-align:center;}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,rgba(29,110,245,.3),rgba(6,182,212,.2));border:2px solid rgba(29,110,245,.3);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 16px;}
+.profile-name{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--white);margin-bottom:4px;}
+.profile-email{font-size:.78rem;color:var(--muted);}
+.profile-joined{font-size:.72rem;color:var(--dim);margin-top:8px;}
+.profile-stats{display:flex;gap:16px;justify-content:center;margin:20px 0;padding:16px 0;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);}
+.pstat{text-align:center;}
+.pstat-num{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--blue-light);}
+.pstat-label{font-size:.68rem;color:var(--dim);margin-top:2px;}
+.profile-links{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.profile-link{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:7px;font-size:.82rem;color:var(--muted);text-decoration:none;transition:all .2s;}
+.profile-link:hover{background:rgba(29,110,245,.07);color:var(--blue-light);}
+.profile-main{display:flex;flex-direction:column;gap:20px;}
+.profile-card{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:26px;}
+.pcard-title{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;letter-spacing:2px;color:var(--blue-light);margin-bottom:18px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.mode-item{padding:14px;background:var(--panel);border:1px solid var(--edge);border-radius:8px;text-align:center;font-size:.78rem;color:var(--muted);cursor:default;}
+.mode-item.current{border-color:rgba(29,110,245,.3);background:rgba(29,110,245,.07);color:var(--blue-light);}
+.danger-zone{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:22px;}
+.dz-title{font-family:'Orbitron',monospace;font-size:.68rem;letter-spacing:2px;color:#f87171;margin-bottom:14px;}
+@media(max-width:768px){.profile-layout{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}.mode-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<nav class="app-nav">
+  <a href="/" class="nav-brand"><span class="nav-logo">SEIA</span></a>
+  <div class="nav-links">
+    <a href="/chat"      class="nav-link">💬 Chat</a>
+    <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+    <a href="/journal"   class="nav-link">📓 Journal</a>
+    <a href="/reviews"   class="nav-link">⭐ Reviews</a>
+    <a href="/profile"   class="nav-link active">👤 {{user.name}}</a>
+    <a href="/logout"    class="nav-btn-out">Logout</a>
+  </div>
+</nav>
+ 
+<div class="page profile-page">
+<div class="container">
+<div class="profile-layout">
+ 
+  <!-- Sidebar -->
+  <aside class="profile-sidebar">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-name">{{user.name}}</div>
+    <div class="profile-email">{{user.email}}</div>
+    <div class="profile-joined">Joined {{user.created_at.strftime('%B %Y')}}</div>
+    <div class="profile-stats">
+      <div class="pstat">
+        <div class="pstat-num">{{msg_count}}</div>
+        <div class="pstat-label">Messages</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-num">{{mood_count}}</div>
+        <div class="pstat-label">Mood Logs</div>
+      </div>
+    </div>
+    <div class="profile-links">
+      <a href="/chat"      class="profile-link">💬 Go to Chat</a>
+      <a href="/dashboard" class="profile-link">📊 Dashboard</a>
+      <a href="/journal"   class="profile-link">📓 Journal</a>
+      <a href="/reviews"   class="profile-link">⭐ Reviews</a>
+      <a href="/logout"    class="profile-link" style="color:#f87171;">🚪 Logout</a>
+    </div>
+  </aside>
+ 
+  <!-- Main -->
+  <div class="profile-main">
+ 
+    <!-- Update profile -->
+    <div class="profile-card">
+      <div class="pcard-title">EDIT PROFILE</div>
+      <form method="POST" action="/profile/update">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input class="form-input" type="text" name="name" value="{{user.name}}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" value="{{user.email}}" disabled style="opacity:.5;cursor:not-allowed;">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+      </form>
+    </div>
+ 
+    <!-- Current mode -->
+    <div class="profile-card">
+      <div class="pcard-title">CURRENT MODE</div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">Your active SEIA personality. Switch any time from the chat.</p>
+      <div class="mode-grid">
+        {% set modes_list = [('friend','💚 Friend'),('partner','💜 Partner'),('coder','🩵 Coder'),('therapist','🧡 Therapist'),('agent','💙 Agent')] %}
+        {% for mk, ml in modes_list %}
+        <div class="mode-item {% if user.current_mode == mk %}current{% endif %}">
+          {{ml}}<br>{% if user.current_mode == mk %}<span style="font-size:.65rem;color:var(--blue-light);margin-top:4px;display:block;">ACTIVE</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+ 
+    <!-- Danger zone -->
+    <div class="danger-zone">
+      <div class="dz-title">⚠ DANGER ZONE</div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">Clear all your chat history. This cannot be undone.</p>
+      <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑️ Clear Chat History</button>
+    </div>
+ 
+  </div>
+</div>
+</div>
+</div>
+ 
+<script>
+async function clearHistory() {
+  if (!confirm('Delete ALL chat history? This cannot be undone.')) return;
+  await fetch('/api/reset', { method: 'POST' });
+  alert('Chat history cleared.');
+}
+</script>
+</body>
+</html>
+ 
