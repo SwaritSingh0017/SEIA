@@ -36,7 +36,7 @@ def auto_mood_score(text):
 @chat_bp.route("/chat")
 @login_required
 def chat_page():
-    return render_template("chat.html", user=current_user)
+    return render_template("chat.html", user=current_user,mode_info=MODES.get(current_user.current_mode, MODES["friend"]),modes=MODES)
  
 @chat_bp.route("/api/chat", methods=["POST"])
 @login_required
