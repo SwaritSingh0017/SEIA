@@ -7,17 +7,23 @@ reviews_bp = Blueprint("reviews", __name__)
  
 @reviews_bp.route("/reviews")
 def reviews_page():
-    reviews = Review.query.order_by(Review.created_at.desc()).limit(50).all()
+    reviews = (Review.query
+               .order_by(Review.created_at.desc())
+               .limit(50)
+               .all())
     data = []
     for r in reviews:
-        user = User.query.get(r.user_id)
+        u = User.query.get(r.user_id)
         data.append({
-            "name": user.name if user else "Anonymous",
-            "rating": r.rating, "text": r.text,
-            "mode": r.mode_used,
-            "date": r.created_at.strftime("%b %d, %Y")
+            "name":   u.name if u else "Anonymous",
+            "rating": r.rating,
+            "text":   r.text,
+            "mode":   r.mode_used,
+            "date":   r.created_at.strftime("%b %d, %Y"),
+            "stars":  "★" * r.rating + "☆" * (5 - r.rating),
         })
-    return render_template("reviews.html", reviews=data)
+    avg = round(sum(r["rating"] for r in data) / len(data), 1) if data else 0
+    return render_template("reviews.html", reviews=data, avg=avg, total=len(data))
  
 @reviews_bp.route("/api/reviews", methods=["POST"])
 @login_required
