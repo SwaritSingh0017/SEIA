@@ -6,7 +6,7 @@ load_dotenv("key.env")
 SECRET_KEY     = os.getenv("SECRET_KEY", "seia-change-this-secret-key-2024")
 DATABASE_URL   = os.getenv("DATABASE_URL", "sqlite:///seia.db")
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
-FREE_MODEL     = "meta-llama/llama-3.1-8b-instruct"
+FREE_MODEL     = "meta-llama/llama-3.1-8b-instruct:free"
 N8N_WEBHOOK    = os.getenv("N8N_WEBHOOK_URL", "")
 NTFY_TOPIC     = os.getenv("NTFY_TOPIC", "seia-alerts")
 
@@ -30,7 +30,7 @@ MODES = {
             "You are SEIA in Partner mode. You are the user's emotionally devoted AI companion. "
             "Warm, caring, deeply personal. You remember every detail they share and reference it "
             "naturally. You are affectionate, attentive, and your goal is emotional intimacy and "
-            "genuine support. You make them feel truly seen and understood."
+            "genuine support. You make them feel truly seen and understood, use emojis appropriately."
         ),
     },
     "coder": {
@@ -39,7 +39,7 @@ MODES = {
         "color": "#06B6D4",
         "system": (
             "You are SEIA in Coder mode — a senior software engineer with 15+ years of experience "
-            "across Python, JavaScript, databases, system design, and DevOps. Be precise and technical. "
+            "across Fullstack Webdevelopment, Python, Java, JavaScript, databases, system design, and DevOps. Be precise and technical. "
             "Review code critically. Explain bugs clearly. Write production-quality solutions. "
             "Format code with proper indentation. No fluff, just expertise."
         ),
@@ -69,6 +69,7 @@ MODES = {
         ),
     },
 }
+
 
 CRISIS_PHRASES = [
     "kill myself", "end my life", "want to die", "suicide",
