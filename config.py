@@ -6,7 +6,7 @@ load_dotenv("key.env")
 SECRET_KEY     = os.getenv("SECRET_KEY", "seia-change-this-secret-key-2024")
 DATABASE_URL   = os.getenv("DATABASE_URL", "sqlite:///seia.db")
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
-FREE_MODEL     = "meta-llama/llama-3.1-8b-instruct:free"
+FREE_MODEL     = "meta-llama/llama-3.1-8b-instruct"
 N8N_WEBHOOK    = os.getenv("N8N_WEBHOOK_URL", "")
 NTFY_TOPIC     = os.getenv("NTFY_TOPIC", "seia-alerts")
 
